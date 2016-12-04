@@ -1,0 +1,140 @@
+
+
+#include <Stepper.h>
+#include <Time.h>
+#include <SPI.h>
+#include <SD.h>
+
+//outputs for stepper motor and end stop switch
+int in1Pin = 6; 
+int in2Pin = 7; 
+int in3Pin = 8; 
+int in4Pin = 9;
+int stop_switch = 10;
+int posi_slider=0;
+
+// definition of the pumps 
+int pump1 = 2;
+int pump2 = 3;
+int pump3 = 4;
+
+Stepper motor(200, in1Pin, in2Pin, in3Pin, in4Pin);  
+
+   int stepbetweenpumps = 1500;
+   int posi_pump []= {0,1,2,3,4,5};
+
+
+
+////////////////////////////////////////////////////////////////////////////////////
+ 
+void setup() {
+
+
+  // define slider positions in front of the pumps in (number of steps from the start)
+
+   for (int i = 0 ; i<=5 ; i++){
+     posi_pump[i] *= stepbetweenpumps; 
+   }
+
+  
+  pinMode(in1Pin, OUTPUT);  
+  pinMode(in2Pin, OUTPUT);  
+  pinMode(in3Pin, OUTPUT);  
+  pinMode(in4Pin, OUTPUT);
+  pinMode(stop_switch, INPUT);
+  
+  pinMode(pump1, OUTPUT);  
+  pinMode(pump2, OUTPUT);  
+  pinMode(pump3, OUTPUT);
+  
+    while (!Serial);    
+  Serial.begin(9600);  
+  digitalWrite(pump1,LOW);
+  digitalWrite(pump2,LOW);
+  digitalWrite(pump3,LOW);
+
+//  motor.setSpeed(100); // corresponding to 1.2cm/sec, or 300steps/sec ; speed to 100 seems the fastest possible by this config
+  initialize_stepper();
+      
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+ 
+void loop() {
+
+  
+  if (Serial.available())  
+  {   int pump_nb = Serial.parseInt();
+      Serial.print("Current positon of slider :");
+      Serial.println(posi_slider);
+      int steps = posi_pump[pump_nb] - posi_slider ;
+      Serial.print("Number of steps to go :");
+      Serial.println(steps);
+      Serial.print("go to reqch pump number :");
+      Serial.println(pump_nb);
+  delay(200);
+         // move the slider to the defined pump position      
+
+       move_slider(steps);
+       delay(200);        
+        // activate the defined pump
+        float timerinms = 1000*3; //3sec flow
+        activ_pump(pump_nb,timerinms);
+   delay(50);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+ 
+void activ_pump(int pump_nb, float timerinms){
+  Serial.print(timerinms);
+  Serial.print(" ms /  on the pump number :");
+  Serial.println(pump_nb);
+  delay(50);
+
+  digitalWrite(pump_nb+1,HIGH);
+  Serial.print("output number ");
+  Serial.print(pump_nb+1);
+  Serial.print(" is "  );
+  Serial.println(digitalRead(pump_nb));
+  delay(timerinms);
+  digitalWrite(pump_nb+1,LOW);
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+
+ void move_slider(int steps){
+         motor.setSpeed(50);
+        //Serial.println(posi_slider+steps);
+        int steps_ongoing = 0;
+        
+       while(digitalRead(stop_switch )==LOW && steps_ongoing < abs(steps)){
+       if ( steps>0){motor.step(-10);
+       steps_ongoing += 10;  
+       }
+       else{
+        motor.step(10);
+       steps_ongoing += 10;
+       }
+    }
+     
+         posi_slider=posi_slider+steps;  
+         Serial.print(steps);
+         Serial.print(" steps/  new position:");
+         Serial.println(posi_slider);
+         delay(200);
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+
+void initialize_stepper(){
+    Serial.println("Go to init");
+    motor.setSpeed(30);
+   while(digitalRead(stop_switch )==LOW){
+       motor.step(10);  
+       }
+    Serial.println("Init position reached");
+    posi_slider=0;
+    Serial.println(posi_slider);
+}
+
