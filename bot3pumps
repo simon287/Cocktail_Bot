@@ -18,9 +18,9 @@ int pump1 = 2;
 int pump2 = 3;
 int pump3 = 4;
 
-Stepper motor(200, in1Pin, in2Pin, in3Pin, in4Pin);  
+Stepper motor(200, in3Pin, in4Pin, in1Pin, in2Pin ); 
 
-   int stepbetweenpumps = 1500;
+   int stepbetweenpumps = 1500; // means 7.5 rotations of the motor
    int posi_pump []= {0,1,2,3,4,5};
 
 
@@ -70,7 +70,7 @@ void loop() {
       int steps = posi_pump[pump_nb] - posi_slider ;
       Serial.print("Number of steps to go :");
       Serial.println(steps);
-      Serial.print("go to reqch pump number :");
+      Serial.print("go to reach pump number :");
       Serial.println(pump_nb);
   delay(200);
          // move the slider to the defined pump position      
@@ -80,7 +80,7 @@ void loop() {
         // activate the defined pump
         float timerinms = 1000*3; //3sec flow
         activ_pump(pump_nb,timerinms);
-   delay(50);
+   delay(200);
   }
 }
 
@@ -103,13 +103,13 @@ void activ_pump(int pump_nb, float timerinms){
 
 ////////////////////////////////////////////////////////////////////////////////////
 
- void move_slider(int steps){
+ void move_slider(int movingsteps){
          motor.setSpeed(50);
-        //Serial.println(posi_slider+steps);
+        //Serial.println(posi_slider+movingsteps);
         int steps_ongoing = 0;
         
-       while(digitalRead(stop_switch )==LOW && steps_ongoing < abs(steps)){
-       if ( steps>0){motor.step(-10);
+       while(digitalRead(stop_switch )==LOW && steps_ongoing < abs(movingsteps)){
+       if ( movingsteps>0){motor.step(-10);
        steps_ongoing += 10;  
        }
        else{
@@ -118,8 +118,8 @@ void activ_pump(int pump_nb, float timerinms){
        }
     }
      
-         posi_slider=posi_slider+steps;  
-         Serial.print(steps);
+         posi_slider=posi_slider+movingsteps;  
+         Serial.print(movingsteps);
          Serial.print(" steps/  new position:");
          Serial.println(posi_slider);
          delay(200);
